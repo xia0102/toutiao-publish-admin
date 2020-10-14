@@ -1,20 +1,21 @@
-<!-- login -->
+<!-- login 登录 -->
 <template>
   <div class="login-container">
     <!-- <div class="login-head"></div> -->
     <el-form class="login-form"
-             ref="form"
-             :model="user">
-      <el-form-item>
+             ref="login-form"
+             :model="user"
+             :rules="formRules">
+      <el-form-item prop="mobile">
         <el-input v-model="user.mobile"
                   placeholder="请输入手机号"></el-input>
       </el-form-item>
-      <el-form-item>
+      <el-form-item prop="code">
         <el-input v-model="user.code"
                   placeholder="请输入验证码"></el-input>
       </el-form-item>
-      <el-form-item>
-        <el-checkbox v-model="checked">我已阅读并同意用户协议和隐私条款</el-checkbox>
+      <el-form-item prop="agree">
+        <el-checkbox v-model="user.agree">我已阅读并同意用户协议和隐私条款</el-checkbox>
       </el-form-item>
       <el-form-item>
         <el-button class="login-btn"
@@ -27,17 +28,44 @@
 </template>
 
 <script>
-import request from '@/utils/request.js'
+import { login } from '@/api/user'
+
 export default {
   name: 'LoginIndex',
   data () {
     return {
       user: {
         mobile: '', // 手机号
-        code: '' // 验证码
+        code: '', // 验证码
+        agree: false // 是否同意协议
       },
-      checked: false, // 是否同意协议的选中状态
-      loginLoading: false // 登录的 loading 状态（防止网络请求慢出现用户多次点击触发登录请求）
+      loginLoading: false, // 登录的 loading 状态（防止网络请求慢出现用户多次点击触发登录请求）
+      formRules: { // 表单验证规则配置
+        mobile: [
+          { required: true, message: '请输入手机号', trigger: 'change' },
+          { pattern: /^1[3|5|7|8|9]\d{9}$/, message: '请输入正确的号码格式', trigger: 'blur' }
+        ],
+        code: [
+          { required: true, message: '请输入验证码', trigger: 'change' },
+          { pattern: /^\d{6}$/, message: '请输入正确的验证码格式', trigger: 'blur' }
+        ],
+        agree: [
+          {
+            // 自定义校验规则
+            // 验证通过：callback()
+            // 验证失败：callback(new Error('错误消息'))
+            validator: (rule, value, callback) => {
+              // console.log(rule, value)
+              if (value) {
+                callback()
+              } else {
+                callback(new Error('请同意用户协议'))
+              }
+            },
+            trigger: 'change'
+          }
+        ]
+      }
     }
   },
 
@@ -46,19 +74,24 @@ export default {
   methods: {
     onLogin () {
       // 获取表单数据（根据接口要求绑定数据）
-      const user = this.user
+      // const user = this.user
 
       // 表单验证
+      this.$refs['login-form'].validate(valid => {
+        // 表单验证失败，停止请求提交
+        if (!valid) {
+          return
+        }
 
+        // 验证通过，请求登录
+        this.login()
+      })
+    },
+    login () {
       // 验证通过，提交登录
       // 开启登录中
       this.loginLoading = true
-      request({
-        method: 'POST',
-        url: '/mp/v1_0/authorizations',
-        // data 用来设置 POST 请求体
-        data: user
-      }).then(res => {
+      login(this.user).then(res => {
         // 处理后端响应结果   成功：xxx
         console.log(res)
         this.$message({
