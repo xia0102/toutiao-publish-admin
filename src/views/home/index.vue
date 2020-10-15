@@ -15,8 +15,6 @@ export default {
 
   computed: {},
   watch: {},
-  created: {},
-  mounted: {},
   methods: {}
 }
 

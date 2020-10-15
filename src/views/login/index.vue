@@ -35,8 +35,8 @@ export default {
   data () {
     return {
       user: {
-        mobile: '', // 手机号
-        code: '', // 验证码
+        mobile: '13911111111', // 手机号
+        code: '246810', // 验证码
         agree: false // 是否同意协议
       },
       loginLoading: false, // 登录的 loading 状态（防止网络请求慢出现用户多次点击触发登录请求）
@@ -100,6 +100,12 @@ export default {
         })
         // 关闭 loading
         this.loginLoading = false
+
+        // 跳转到首页
+        // this.$router.push('/')
+        this.$router.push({
+          name: 'home'
+        })
       }).catch(err => {
         // 处理后端响应结果   失败：xxx
         console.log('登录失败', err)
