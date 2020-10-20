@@ -13,8 +13,19 @@ export const login = data => {
   })
 }
 
-// 获取用户信息
-// export const getUserInfo = () => {}
+// 获取用户资料
+export const getUserProfile = () => {
+  return request({
+    method: 'GET',
+    url: '/mp/v1_0/user/profile'
+    // 请求头
+    // headers: {
+    //   // 属性名：接口要求的
+    //   // 属性值：Bearer空格token数据
+    //   Authorization: `Bearer ${user.token}`
+    // }
+  })
+}
 
 // 修改用户信息
 // export const updateUser = () => {}

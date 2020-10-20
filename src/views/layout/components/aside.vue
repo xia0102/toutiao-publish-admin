@@ -5,7 +5,8 @@
            background-color="#002033"
            text-color="#fff"
            active-text-color="#ffd04b"
-           router>
+           router
+           :collapse="isCollapse">
     <el-menu-item index="/">
       <i class="iconfont iconicon_huabanfuben"></i>
       <span slot="title">首页</span>
@@ -41,7 +42,7 @@
 export default {
   name: 'Aside',
   components: {},
-  props: {},
+  props: ['is-collapse'],
   data () {
     return {
     }

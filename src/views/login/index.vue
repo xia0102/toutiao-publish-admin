@@ -93,13 +93,16 @@ export default {
       this.loginLoading = true
       login(this.user).then(res => {
         // 处理后端响应结果   成功：xxx
-        console.log(res)
+        // console.log(res)
         this.$message({
           message: '登录成功',
           type: 'success'
         })
         // 关闭 loading
         this.loginLoading = false
+
+        // 本地存储
+        window.localStorage.setItem('user', JSON.stringify(res.data.data))
 
         // 跳转到首页
         // this.$router.push('/')

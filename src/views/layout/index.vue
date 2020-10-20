@@ -2,11 +2,34 @@
 <template>
   <el-container class="layout-container">
     <el-aside class="aside"
-              width="200px">
-      <app-aside class="aside-menu" />
+              width="auto">
+      <app-aside class="aside-menu"
+                 :is-collapse="isCollapse" />
     </el-aside>
     <el-container>
-      <el-header class="header">顶部导航栏</el-header>
+      <el-header class="header">
+        <div>
+          <i :class="{
+              'el-icon-s-fold':isCollapse,
+              'el-icon-s-unfold':!isCollapse
+            }"
+             @click="isCollapse = !isCollapse"></i>
+          <span>头条内容管理系统</span>
+        </div>
+        <el-dropdown>
+          <div class="avatar-wrap">
+            <img :src="user.photo"
+                 alt=""
+                 class="avatar">
+            <span>{{ user.name }}</span>
+            <i class="el-icon-arrow-down el-icon--right"></i>
+          </div>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>设置</el-dropdown-item>
+            <el-dropdown-item>退出</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </el-header>
       <el-main class="main">
         <!-- 子路由出口 -->
         <router-view></router-view>
@@ -17,6 +40,8 @@
 
 <script>
 import AppAside from './components/aside'
+import { getUserProfile } from '@/api/user'
+
 export default {
   name: 'LayoutIndex',
   components: {
@@ -25,12 +50,24 @@ export default {
   props: {},
   data () {
     return {
+      user: {}, // 当前登录用户信息
+      isCollapse: false // 侧边菜单栏的展示状态
     }
   },
 
   computed: {},
+  created () {
+    // 组件初始化好，请求获取用户资料
+    this.loadUserProfile()
+  },
   watch: {},
-  methods: {}
+  methods: {
+    loadUserProfile () {
+      getUserProfile().then(res => {
+        this.user = res.data.data
+      })
+    }
+  }
 }
 
 </script>
@@ -52,10 +89,24 @@ export default {
 }
 
 .header {
-  background-color: #b3c0d1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
 }
 
 .main {
   background-color: #e9eef3;
+}
+
+.avatar-wrap {
+  display: flex;
+  align-items: center;
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
 }
 </style>

@@ -9,6 +9,22 @@ const request = axios.create({
 })
 
 // 请求拦截器
+request.interceptors.request.use(
+  // 任何所有请求会经过这里
+  function (config) {
+    const user = JSON.parse(window.localStorage.getItem('user'))
+    // 如果有登录用户
+    if (user) {
+      config.headers.Authorization = `Bearer ${user.token}`
+    }
+
+    return config
+  },
+  // 请求失败会经过这里
+  function (error) {
+    return Promise.reject(error)
+  }
+)
 
 // 响应拦截器
 
