@@ -38,15 +38,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="日期">
-          <el-date-picker v-model="form.date1"
+          <el-date-picker v-model="rangeDate"
                           type="daterange"
                           range-separator="至"
                           start-placeholder="开始日期"
-                          end-placeholder="结束日期">
+                          end-placeholder="结束日期"
+                          format="yyyy-MM-dd"
+                          value-format="yyyy-MM-dd">
           </el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary"
+                     :disabled="loading"
                      @click="loadArticles(1)">查询</el-button>
         </el-form-item>
       </el-form>
@@ -63,7 +66,8 @@
                 stripe
                 style="width: 100%"
                 class="list-table"
-                size="mini">
+                size="mini"
+                v-loading="loading">
         <el-table-column prop="cover"
                          label="封面">
           <template slot-scope="scope">
@@ -94,15 +98,17 @@
                          label="发布时间">
         </el-table-column>
         <el-table-column label="操作">
-          <template>
+          <template slot-scope="scope">
             <el-button size="mini"
                        type="primary"
                        circle
-                       icon="el-icon-edit"></el-button>
+                       icon="el-icon-edit"
+                       @click="$router.push('/publish?id=' + scope.row.id.toString())"></el-button>
             <el-button size="mini"
                        type="danger"
                        circle
-                       icon="el-icon-delete"></el-button>
+                       icon="el-icon-delete"
+                       @click="onDeleteArticle(scope.row.id)"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -112,6 +118,8 @@
                      layout="prev, pager, next"
                      :total="totalCount"
                      :page-size="pageSize"
+                     :disabled="loading"
+                     :current-page.sync="page"
                      @current-change="onCurrentChange">
       </el-pagination>
     </el-card>
@@ -119,7 +127,7 @@
 </template>
 
 <script>
-import { getArticles, getArticleChannels } from '@/api/article'
+import { getArticles, getArticleChannels, deleteArticle } from '@/api/article'
 
 export default {
   name: 'ArticleIndex',
@@ -127,10 +135,7 @@ export default {
   props: {},
   data () {
     return {
-      form: {
-        date1: '',
-        resource: ''
-      },
+      form: {},
       // 文章内容列表
       articles: [],
       // 状态
@@ -150,27 +155,42 @@ export default {
       // 文章频道列表
       channels: [],
       // 查询文章的频道id
-      channelId: null
+      channelId: null,
+      // 筛选的范围日期
+      rangeDate: null,
+      // 表格数据加载中
+      loading: true,
+      // 当前页码
+      page: 1
     }
   },
 
   computed: {},
   watch: {},
   created () {
-    this.loadArticles()
+    this.loadArticles(1)
     this.loadChannels()
   },
   methods: {
     loadArticles (page = 1) {
+      // 显示加载中
+      this.loading = true
       getArticles({
         page,
         per_page: this.pageSize,
         status: this.status,
-        channel_id: this.channelId
+        channel_id: this.channelId,
+        begin_pubdate: this.rangeDate ? this.rangeDate[0] : null,
+        end_pubdate: this.rangeDate ? this.rangeDate[1] : null
       }).then(res => {
         const { results, total_count: totalCount } = res.data.data
+        // 数据
         this.articles = results
+        // 总数据条数
         this.totalCount = totalCount
+
+        // 关闭加载中
+        this.loading = false
       })
     },
     onCurrentChange (page) {
@@ -179,6 +199,24 @@ export default {
     loadChannels () {
       getArticleChannels().then(res => {
         this.channels = res.data.data.channels
+      })
+    },
+    onDeleteArticle (articleId) {
+      // 弹框
+      this.$confirm('确认删除吗', '删除提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteArticle(articleId.toString()).then(res => {
+          // 删除成功，更新文章数据列表
+          this.loadArticles(this.page)
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
       })
     }
   }
