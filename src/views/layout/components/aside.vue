@@ -1,6 +1,6 @@
 <!-- aside 侧边导航栏 -->
 <template>
-  <el-menu default-active="/"
+  <el-menu :default-active="$route.path"
            class="nav-menu"
            background-color="#002033"
            text-color="#fff"

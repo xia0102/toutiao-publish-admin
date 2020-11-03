@@ -34,6 +34,18 @@
             <el-radio :label="0">无图</el-radio>
             <el-radio :label="-1">自动</el-radio>
           </el-radio-group>
+          <div style="display:block;">
+            <template v-if="article.cover.type > 0">
+              <upload-cover v-for="(cover,index) in article.cover.type"
+                            :key="cover"
+                            v-model="article.cover.images[index]"
+                            style="display:inline-block;" />
+              <!-- <upload-cover v-for="(cover,index) in article.cover.type"
+                          :key="index"
+                          :cover-image="article.cover.images[index]"
+                          @update-cover="onUpdateCover(index,$event)" /> -->
+            </template>
+          </div>
         </el-form-item>
         <el-form-item label="频道"
                       prop="channel_id">
@@ -57,6 +69,7 @@
 
 <script>
 import { getArticleChannels, addArticles, getArticle, updateArticles } from '@/api/article'
+import UploadCover from './components/upload-cover'
 
 // 富文本编辑器
 import {
@@ -86,7 +99,8 @@ import { uploadImage } from '@/api/image'
 export default {
   name: 'PublishIndex',
   components: {
-    'el-tiptap': ElementTiptap
+    'el-tiptap': ElementTiptap,
+    UploadCover
   },
   props: {},
   data () {
@@ -175,12 +189,12 @@ export default {
         this.channels = res.data.data.channels
       })
     },
+    // 发表 存为草稿
     onPublish (draft = false) {
       this.$refs['publish-form'].validate(valid => {
-        if (valid) {
+        if (!valid) {
           return
         }
-
         const articleId = this.$route.query.id
         if (articleId) {
           // 修改文章
@@ -211,6 +225,9 @@ export default {
       getArticle(this.$route.query.id).then(res => {
         this.article = res.data.data
       })
+    },
+    onUpdateCover (index, url) {
+      this.article.cover.images[index] = url
     }
   }
 }

@@ -10,31 +10,35 @@
           <el-breadcrumb-item>个人设置</el-breadcrumb-item>
         </el-breadcrumb>
       </div>
-      <el-row>
-        <el-col :span="15">
+      <el-row class="user-item">
+        <el-col :span="18">
           <!-- 表单数据 -->
-          <el-form ref="form"
+          <el-form ref="settings-form"
                    :model="user"
-                   label-width="70px">
+                   :rules="formRules"
+                   label-width="80px">
             <el-form-item label="编号">
               {{ user.id }}
             </el-form-item>
             <el-form-item label="手机">
               {{ user.mobile }}
             </el-form-item>
-            <el-form-item label="媒体名称">
+            <el-form-item label="媒体名称"
+                          prop="name">
               <el-input v-model="user.name"></el-input>
             </el-form-item>
             <el-form-item label="媒体介绍">
               <el-input type="textarea"
                         v-model="user.intro"></el-input>
             </el-form-item>
-            <el-form-item label="邮箱">
+            <el-form-item label="邮箱"
+                          prop="email">
               <el-input v-model="user.email"></el-input>
             </el-form-item>
             <el-form-item>
               <el-button type="primary"
-                         @click="onSubmit">保存</el-button>
+                         :loading="updateProfileLoading"
+                         @click="onUpdateUser">保存</el-button>
             </el-form-item>
           </el-form>
         </el-col>
@@ -78,10 +82,13 @@
 </template>
 
 <script>
-import { getUserProfile, updateUserPhoto } from '@/api/user'
+import { getUserProfile, updateUserPhoto, updateUserProfile } from '@/api/user'
 
 import 'cropperjs/dist/cropper.css'
 import Cropper from 'cropperjs'
+
+// 通信  发布数据
+import globalBus from '@/utils/global-bus'
 
 export default {
   name: 'SettingsIndex',
@@ -98,10 +105,21 @@ export default {
         name: '',
         photo: ''
       },
+      formRules: {
+        name: [
+          { required: true, message: '请输入媒体名称', trigger: 'blur' },
+          { min: 2, max: 10, message: '长度在 2 到 10 个字符', trigger: 'blur' }
+        ],
+        email: [
+          { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+          { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+        ]
+      },
       dialogVisible: false, // 控制上传图片截切预览的显示状态
       previewImage: '', // 预览图片
       cropper: null, // 裁切器示例
-      updatePhotoLoading: false // 更新用户头像 loading 状态
+      updatePhotoLoading: false, // 更新用户头像 loading 状态
+      updateProfileLoading: false // 更新基本信息的 loading 状态
     }
   },
 
@@ -118,8 +136,27 @@ export default {
         this.user = res.data.data
       })
     },
-    onSubmit () {
-      console.log('submit!')
+    // 保存  修改用户基本信息
+    onUpdateUser () {
+      // 表单验证
+      this.$refs['settings-form'].validate(valid => {
+        // 表单验证失败，停止请求提交
+        if (!valid) {
+          return
+        }
+
+        this.updateProfileLoading = true
+        updateUserProfile(this.user).then(res => {
+          this.$message({
+            type: 'success',
+            message: '保存成功'
+          })
+          this.updateProfileLoading = false
+
+          // 发布通知，用户信息已修改
+          globalBus.$emit('update-user', this.user)
+        })
+      })
     },
     // 选中图片，图片发生改变
     onFileChange () {
@@ -133,7 +170,7 @@ export default {
       this.dialogVisible = true
 
       // 选择相同文件不触发 change 事件
-      this.$ref.file.value = ''
+      file.value = ''
     },
     // 弹出层的打开事件
     onDialogOpened () {
@@ -184,6 +221,9 @@ export default {
           this.user.photo = window.URL.createObjectURL(file)
           // this.user.photo = res.data.data.photo
           this.updatePhotoLoading = false
+
+          // 发布通知，用户头像已修改
+          globalBus.$emit('update-user', this.user)
         })
       })
     }
@@ -199,5 +239,11 @@ export default {
     max-width: 100%;
     height: 200px;
   }
+}
+
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>
